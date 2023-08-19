@@ -6,54 +6,51 @@ import (
 	"time"
 )
 
-// responses := make(map[string]string)
-
 type Fetcher interface {
-	// Fetch returns the body of URL and
-	// a slice of URLs found on that page.
 	Fetch(url string) (body string, urls []string, err error)
 }
 
-// Crawl uses fetcher to recursively crawl
-// pages starting with url, to a maximum of depth.
-func Crawl(url string, depth int, fetcher Fetcher, ch chan string, responses *map[string]string, wg *sync.WaitGroup) {
+func Crawl(url string, depth int, fetcher Fetcher, mu *sync.Mutex, responses map[string]string, wg *sync.WaitGroup) {
 	defer wg.Done()
-	// TODO: Fetch URLs in parallel.
+    if _, ok := responses[url]; ok {
+        fmt.Printf("Already fetched URL %v, skipping\n", url)
+        return
+    }
 	// TODO: Don't fetch the same URL twice.
-	// This implementation doesn't do either:
 	if depth <= 0 {
 		return
 	}
 	body, urls, err := fetcher.Fetch(url)
+
+    mu.Lock()
+    responses[url] = body
+    mu.Unlock()
+
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 	fmt.Printf("found: %s %q\n", url, body)
 	for _, url := range urls {
-		// Crawl(url, depth-1, fetcher, ch, responses, wg)
         wg.Add(1)
-		go Crawl(url, depth-1, fetcher, ch, responses, wg)
-
-		// wg.Add(1)
-		// go func() {
-		//     wg.Done()
-		//     Crawl(url, depth-1, fetcher, ch, responses, wg)
-		// }()
+		go Crawl(url, depth-1, fetcher, mu, responses, wg)
 	}
 	return
 }
 
 func main() {
 	start := time.Now()
-	ch := make(chan string)
+
+	// ch := make(chan string)
+    mu := sync.Mutex{}
+
 	var wg sync.WaitGroup
+
 	wg.Add(1)
 	responses := make(map[string]string)
-	Crawl("https://golang.org/", 4, fetcher, ch, &responses, &wg)
+	Crawl("https://golang.org/", 4, fetcher, &mu, responses, &wg)
 	wg.Wait()
-    // time.Sleep(2 * time.Second)
-    // muSToSec := func(s time.)
+
     delta := time.Now().UnixMicro()-start.UnixMicro()
     fmt.Printf("Program ran: %v ms\n", delta/1000)
 }
@@ -67,7 +64,6 @@ type fakeResult struct {
 }
 
 func (f fakeFetcher) Fetch(url string) (string, []string, error) {
-    fmt.Println("fetching URL")
     time.Sleep(100 * time.Millisecond)
 	if res, ok := f[url]; ok {
 		return res.body, res.urls, nil
