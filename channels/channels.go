@@ -1,25 +1,27 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	// "time"
+)
 
-func sum(s []int, c chan int) {
-	sum := 0
-	for _, v := range s {
-		sum += v
+func fibonacci(n int, c chan int) {
+	x, y := 0, 1
+	for i := 0; i < n; i++ {
+		c <- x
+		x, y = y, x+y
 	}
-	c <- sum // send sum to c
+	close(c)
 }
 
 func main() {
-	s := []int{7, 2, 8, -9, 4, 0}
-
-	c := make(chan int, 3)
-
-	go sum(s[:len(s)/2], c)
-    go sum(s[len(s)/2:], c)
-    c <- 66
-	x, y, z := <-c, <-c, <-c // receive from c
-
-	fmt.Println(x, y, x+y)
-    fmt.Println(z)
+	c := make(chan int)
+	go fibonacci(50, c)
+    for {
+        i, going := <- c
+        if !going {
+            break
+        }
+        fmt.Println(i)
+    }
 }
