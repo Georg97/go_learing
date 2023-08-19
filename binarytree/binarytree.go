@@ -34,22 +34,22 @@ func Same(t1, t2 *tree.Tree) bool {
 	go Walk(t1, ch1)
 	go Walk(t2, ch2)
 
-    var syncer sync.WaitGroup
-    syncer.Add(2)
+	var syncer sync.WaitGroup
+	syncer.Add(2)
 
 	fill := func(arr []int, ch chan int) {
 		for i := 0; i < 10; i++ {
 			arr[i] = <-ch
 		}
 		// close(ch)
-        syncer.Done()
+		syncer.Done()
 	}
 	go fill(arr1[:], ch1)
 	go fill(arr2[:], ch2)
 
-    syncer.Wait()
+	syncer.Wait()
 
-    fmt.Printf("Arrs: %v --- %v\n lens: %v | %v\n", arr1, arr2, len(arr1[:]), len(arr2[:]))
+	fmt.Printf("Arrs: %v --- %v\n lens: %v | %v\n", arr1, arr2, len(arr1[:]), len(arr2[:]))
 	if len(arr1) == len(arr2) {
 		for i := 0; i < len(arr1); i++ {
 			if !slices.Contains(arr2[:], arr1[i]) {
