@@ -48,13 +48,6 @@ func Same(t1, t2 *tree.Tree) bool {
 	go fill(arr2[:], ch2)
 
     syncer.Wait()
-	// for {
-	// 	_, open := <-ch1
-	// 	_, open2 := <-ch2
-	// 	if !open && !open2 {
-	// 		break
-	// 	}
-	// }
 
     fmt.Printf("Arrs: %v --- %v\n lens: %v | %v\n", arr1, arr2, len(arr1[:]), len(arr2[:]))
 	if len(arr1) == len(arr2) {
